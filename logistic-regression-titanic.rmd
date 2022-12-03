@@ -13,12 +13,12 @@ output:
 
 ```{r}
 library(tidyverse) # metapackage of all tidyverse packages
+library(titanic)
 ```
 
 ## Loaddata
 
 ```{r}
-titanic_train <- read.csv('/kaggle/input/test-file/tested.csv')
 head(titanic_train)
 ```
 
