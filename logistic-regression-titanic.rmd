@@ -1,0 +1,112 @@
+---
+title: 'Logistic-Regression Titanic'
+author: 'Pariwat Paiwong'
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    toc: true
+---
+# Use Logistic Regression for prdicttion survived on titanic dataset (version1)
+
+## Importing packages
+
+```{r}
+library(tidyverse) # metapackage of all tidyverse packages
+```
+
+## Loaddata
+
+```{r}
+titanic_train <- read.csv('/kaggle/input/test-file/tested.csv')
+head(titanic_train)
+```
+
+## DROP NA (missing values)
+
+```{r}
+titanic_train <- na.omit(titanic_train)
+nrow(titanic_train)
+```
+## SPLIT DATA
+
+```{r}
+set.seed(99)
+n <- nrow(titanic_train)
+id <- sample(1:n, size = n*0.7) ##70% train 30% test
+train_data <- titanic_train[id, ]
+test_data <- titanic_train[-id, ]
+```
+## Trian Model
+
+```{r}
+titanic_model <- glm(Survived ~ Pclass + Age + Sex, data = train_data, family = "binomial")
+
+summary(titanic_model)
+```
+```{r}
+prob_train <- predict(titanic_model, type = "response")
+train_data$pred_survived <- ifelse(prob_train>=0.5,1,0)
+head(train_data)
+```
+## Test Model
+
+```{r}
+prob_test <- predict(titanic_model, newdata = test_data, type = "response")
+test_data$pred_survived <- ifelse(prob_test >= 0.5,1,0)
+head(test_data)
+```
+## confusion matrix
+
+```{r}
+conM_train <- table(train_data$pred_survived, train_data$Survived, dnn = c("Predicted","Actual"))
+conM_test <- table(test_data$pred_survived, test_data$Survived, dnn = c("Predicted","Actual"))
+```
+
+### Train
+
+```{r}
+conM_train
+```
+
+### Test
+
+```{r}
+conM_test
+```
+
+## Model Evaluation Train
+
+```{r}
+acc_train <- (conM_train[1,1]+conM_train[2,2]/sum(conM_train))
+prec_train <- (conM_train[2,2]/(conM_train[2,1]+conM_train[2,2]))
+rec_train <- (conM_train[2,2]/(conM_train[1,2]+conM_train[2,2]))
+f1_train <- 2*((prec_train*rec_train)/(prec_train+rec_train))
+
+print(cat(acc_train,prec_train,rec_train,f1_train))
+```
+
+## Model Evaluation Test
+
+```{r}
+acc_test <- (conM_test[1,1]+conM_test[2,2]/sum(conM_test))
+prec_test <- (conM_test[2,2]/(conM_test[2,1]+conM_test[2,2]))
+rec_test <- (conM_test[2,2]/(conM_test[1,2]+conM_test[2,2]))
+f1_test <- 2*((prec_test*rec_test)/(prec_test+rec_test))
+
+print(cat(acc_test,prec_test,rec_test,f1_test))
+```
+
+## Compare Train and Test
+
+```{r}
+acc <- data.frame(
+  model = c("train","test"),
+  accuracy = c(acc_train,acc_test),
+  precision=c(prec_train,prec_test),
+  recall=c(rec_train,rec_test),
+  F1=c(f1_train,f1_test)
+)
+
+acc
+```
